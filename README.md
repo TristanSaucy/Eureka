@@ -1,5 +1,7 @@
 # Rebellious Calculator
 
+![Calculator Demo](assets/calculator-demo.png)
+
 A unique visualization tool that demonstrates the transition from order to chaos through a simple numerical system. This interactive application shows how complex patterns can emerge from basic rules, illustrating concepts from chaos theory and complex systems.
 
 ## Features
