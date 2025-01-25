@@ -1,62 +1,65 @@
 import unittest
 from src.main import CalculatorApp
 import tkinter as tk
-import sys
 
-class TestCalculatorApp(unittest.TestCase):
+class TestMain(unittest.TestCase):
     def setUp(self):
-        print("\n=== Starting New Test ===")
         self.root = tk.Tk()
         self.app = CalculatorApp(self.root)
 
     def tearDown(self):
-        print("=== Test Complete ===")
         self.root.destroy()
 
-    def test_initial_values(self):
-        """Test initial values are set correctly"""
-        print(f"\nTesting initial values:")
-        initial_value = self.app.presses_var.get()
-        print(f"Expected: 500")
-        print(f"Actual: {initial_value}")
-        self.assertEqual(initial_value, "500")
+    def test_basic_functionality(self):
+        """Test basic calculator functionality"""
+        # Test initial state
+        self.assertEqual(self.app.total, 0)
+        self.assertEqual(self.app.press_count, 0)
 
-    def test_invalid_input(self):
-        """Test handling of invalid input"""
-        print(f"\nTesting invalid input:")
-        test_value = "-100"
-        print(f"Testing with invalid input: {test_value}")
-        self.app.presses_var.set(test_value)
-        self.app.run_simulation()
-        output = self.app.output_text.get("1.0", tk.END)
-        print(f"Output received: {output.strip()}")
-        self.assertIn("Error", output)
+        # Test orderly phase (first 5 presses)
+        self.app.press_count = 1
+        value = self.app.calculate_next_value()
+        self.assertEqual(value, 1)
 
-    def test_valid_input(self):
-        """Test handling of valid input"""
-        print(f"\nTesting valid input:")
-        test_value = "10"
-        print(f"Testing with valid input: {test_value}")
-        self.app.presses_var.set(test_value)
-        self.app.run_simulation()
-        output = self.app.output_text.get("1.0", tk.END)
-        print(f"Output contains 'Final Results': {('Final Results' in output)}")
-        self.assertIn("Final Results", output)
+    def test_initial_state(self):
+        """Test initial state of calculator"""
+        self.assertEqual(self.app.total, 0)
+        self.assertEqual(self.app.press_count, 0)
+        self.assertEqual(len(self.app.totals), 0)
+        self.assertTrue(self.app.chaos_enabled.get())  # Default should be True
 
-def run_tests():
-    # Create a test suite
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestCalculatorApp)
-    
-    # Run the tests
-    print("\n=== Running Calculator App Tests ===")
-    result = unittest.TextTestRunner(verbosity=2).run(suite)
-    print(f"\nTest Summary:")
-    print(f"Tests Run: {result.testsRun}")
-    print(f"Failures: {len(result.failures)}")
-    print(f"Errors: {len(result.errors)}")
-    
-    return result.wasSuccessful()
+    def test_calculate_next_value_orderly_phase(self):
+        """Test the orderly phase (first 5 presses)"""
+        self.app.press_count = 1
+        self.assertEqual(self.app.calculate_next_value(), 1)  # First press should add 1
+        
+        self.app.press_count = 2
+        self.assertEqual(self.app.calculate_next_value(), -1)  # Second press should subtract 1
+
+    def test_calculate_next_value_standard_chaos(self):
+        """Test the standard chaos phase (presses 6-100)"""
+        self.app.press_count = 50
+        value = self.app.calculate_next_value()
+        self.assertTrue(value in [1, -1, 2, -2])  # Should return one of these values
+
+    def test_chaos_level_calculation(self):
+        """Test chaos level calculation"""
+        # Before press 100
+        self.app.press_count = 50
+        self.app.calculate_next_value()
+        self.assertEqual(self.app.chaos_level, 0)
+
+        # After press 100
+        self.app.press_count = 300
+        self.app.calculate_next_value()
+        self.assertTrue(0 < self.app.chaos_level <= 1)
+
+    def test_chaos_toggle(self):
+        """Test chaos toggle functionality"""
+        self.app.chaos_enabled.set(False)
+        self.app.press_count = 300
+        self.app.calculate_next_value()
+        self.assertEqual(self.app.chaos_level, 0)
 
 if __name__ == '__main__':
-    success = run_tests()
-    sys.exit(not success)  # Exit with 0 if successful, 1 if failed
+    unittest.main()
